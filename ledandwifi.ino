@@ -35,10 +35,10 @@
 
 /*********************************** NeoPixel Defintions ********************************/
 #define LedDataPin 5
-#define NUMPIXELX 6
+#define NUMPIXELX 30
 //228 
 //6
-#define NUMPIXELY 9
+#define NUMPIXELY 15
 //96
 //9
 #define NUMPIXEL (NUMPIXELX+NUMPIXELX+NUMPIXELY+NUMPIXELY)
@@ -59,9 +59,8 @@ const char* light_set_topic = "bruh/porch/set";
 const char* on_cmd = "ON";
 const char* off_cmd = "OFF";
 const char* effect = "solid";
-String effectString = "solid";
-String oldeffectString = "solid";
-
+String effectString = "longlonglongname";
+bool changed = false;
 /**************************************** global vars  *********************************/
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -130,7 +129,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     realRed = map(red, 0, 255, 0, brightness);
     realGreen = map(green, 0, 255, 0, brightness);
     realBlue = map(blue, 0, 255, 0, brightness);
-    realWhite = map(white, 0, 255, 0, brightness);
+    realWhite = white; /* dont scale warmwhite */
   }
   else {
 
@@ -184,10 +183,7 @@ bool processJson(char* message) {
     effect = root["effect"];
     effectString = effect;
   }
-
-
-  
-
+  changed = true;
   return true;
 }
 
@@ -262,7 +258,7 @@ void setup() {
 
   Serial.begin(115200);
 
-#define testing
+//#define testing
 #ifdef testing
 // put testcode here
   stateOn = true;
@@ -300,15 +296,9 @@ void loop() {
     setColor(0, 0, 0, 0);
   }
 
+
   client.loop();
 #else
-
-  if (stateOn){
-    movingEffects();
-    staticEffects();
-  } else {
-    setColor(0, 0, 0, 0);
-  }
 
   
 #endif
@@ -474,6 +464,12 @@ inline void setNewDrop(uint8_t* leds, uint8_t intensivity, uint16_t index){
 
 void staticEffects() {
 
+  if (!changed){
+    return;
+  } else {
+    changed = false;
+  }
+  
   if (effectString == "solid"){
       setColor(realRed, realGreen, realBlue, realWhite);
 
@@ -485,6 +481,10 @@ void staticEffects() {
 
   if (effectString == "rainbowx4") {
     staticRainbowX4();
+  }
+
+  if (effectString == "warm white") {
+    setColor(0, 0, 0, realWhite);
   }
 }
 
