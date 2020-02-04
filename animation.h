@@ -7,7 +7,7 @@
  *  ref to led memory
  *    bitcount
  *    ledcount
- *    colorcount (RGB RGBW)
+ *      since most animations dont utilize white chanel, ignore it at first
  *    LED-independant
  *  structoriented
  *  selectedFunction
@@ -15,9 +15,9 @@
  */
 
 struct Animation{
-  int ledCount;
-  uint8_t tick;
-
+  uint16_t ledCount;
+  uint8_t progress;
+  void (*setPixelColor)(uint16_t, uint8_t, uint8_t, uint8_t);
 };
 
 struct NameAndFunction {
