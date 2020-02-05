@@ -12,12 +12,14 @@
  *  structoriented
  *  selectedFunction
  *  currentAnimationState
+ *  JSON containing Animation names for autodiscovery
  */
 
 struct Animation{
-  uint16_t ledCount;
+  const uint16_t ledCount;
   uint8_t progress;
   void (*setPixelColor)(uint16_t, uint8_t, uint8_t, uint8_t);
+  uint8_t state[ledCount * 3]; // maybe a define can help here
 };
 
 struct NameAndFunction {
