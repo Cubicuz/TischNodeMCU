@@ -32,7 +32,6 @@
 
 /************ WIFI and MQTT Information (CHANGE THESE FOR YOUR SETUP) ******************/
 #include "passwd.h"
-#include "animation.h"
 /*********************************** NeoPixel Defintions ********************************/
 #define LedDataPin 5
 #define NUMPIXELX 30
