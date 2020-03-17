@@ -1,0 +1,3 @@
+[submodule "lib/libanimation"]
+	path = lib/libanimation
+	url = https://github.com/Cubicuz/libanimation
