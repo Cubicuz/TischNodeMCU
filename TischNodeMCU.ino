@@ -215,7 +215,7 @@ void reconnect() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    if (client.connect(SENSORNAME, mqtt_username, mqtt_password)) {
+    if (client.connect(DEVICENAME, mqtt_username, mqtt_password)) {
       Serial.println("connected");
       client.subscribe(light_set_topic);
       setColor(0, 0, 0, 0);

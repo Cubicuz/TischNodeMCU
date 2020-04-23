@@ -54,9 +54,10 @@ void registerLight(){
   doc["optimistic"] = true;
   doc["effect"] = true;
   JsonArray effectList = doc.createNestedArray("effect_list");
-  effectList.add("rainbow");
-  effectList.add("rainbowmove");
-  effectList.add("raining");
+  effectList.add(tischleds.SOLID);
+  effectList.add(tischleds.RAINBOW);
+  effectList.add(tischleds.RAINBOWMOVING);
+  effectList.add(tischleds.RAIN);
 
   const uint outputSize = 256;
   char output[outputSize];
@@ -96,15 +97,18 @@ void mqttCallback(MQTTClient *client, char topic[], char payload[], int payload_
       byte green = doc["color"]["g"];
       byte blue = doc["color"]["b"];
       Serial.println(red);
+      tischleds.setColor(red, green, blue);
     }
     if (doc.containsKey("white_value")){
-      
+      tischleds.setWhite(doc["white_value"]);
     }
     if (doc.containsKey("brightness")){
-
+      tischleds.setBrightness(doc["brightness"]);
     }
     if (doc.containsKey("effect")){
-
+      const char * const effect = doc["effect"];
+      Serial.println(effect);
+      tischleds.setAnimation(effect);
     }
   }
 }
