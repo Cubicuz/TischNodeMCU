@@ -41,7 +41,9 @@ void connectHomeassistant(){
 }
 
 void registerLight(){
-  DynamicJsonDocument doc(256);
+  const uint outputSize = 512;
+
+  DynamicJsonDocument doc(outputSize);
   doc["~"] = "homeassistant/light/table";
   doc["name"] = "Tisch";
   doc["unique_id"] = "table_light";
@@ -59,7 +61,6 @@ void registerLight(){
   effectList.add(tischleds.RAINBOWMOVING);
   effectList.add(tischleds.RAIN);
 
-  const uint outputSize = 256;
   char output[outputSize];
   if (serializeJson(doc, output) > outputSize){
     Serial.println("ARRAY OUT OF BOUNDS");
