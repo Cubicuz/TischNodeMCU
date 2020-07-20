@@ -4,21 +4,47 @@ Homeassistant::Homeassistant(const char *const *availableAnimations)
     : mqttclient(MQTT_BUFFER_SIZE),
       availableAnimations(availableAnimations)
 {
+  initWifi();
+  initMQTT();
 }
 
-bool Homeassistant::connect()
+RETVAL Homeassistant::connect()
 {
+  RETVAL ret=0;
+  ret=connectWifi();
+  if (ret != 0){
+    return ret;
+  }
+  ret=connectMQTT();
+  if (ret != 0){
+    return ret;
+  }
+  ret=registerLight();
+  if (ret != 0){
+    return ret;
+  }
 }
 
-bool Homeassistant::reconnect()
+RETVAL Homeassistant::reconnect()
 {
+  //check wifi
+  //check MQTT
+  //check Homeassistant
+
 }
 
-bool Homeassistant::connected()
+RETVAL Homeassistant::connected()
 {
+  if (!WiFi.isConnected()){
+    return HA_WIFI_NOT_CONNECTED | HA_MQTT_NOT_CONNECTED;
+  }
+  if (!mqttclient.connected()){
+    return HA_MQTT_NOT_CONNECTED;
+  }
+
 }
 
-bool Homeassistant::sendStatus()
+RETVAL Homeassistant::sendStatus()
 {
 }
 
@@ -26,18 +52,18 @@ void Homeassistant::onStatusReceived()
 {
 }
 
-bool Homeassistant::initWifi()
+RETVAL Homeassistant::initWifi()
 {
     wl_status_t ret = WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     if (ret != 0)
     {
         debugPrintf("Error initWifi code: %i", ret);
-        return false;
+        return -1;
     }
-    return true;
+    return 0;
 }
 
-bool Homeassistant::connectWifi()
+RETVAL Homeassistant::connectWifi()
 {
     debugPrintf("checking wifi...");
     uint16_t timeoutCtr = 0;
@@ -47,21 +73,21 @@ bool Homeassistant::connectWifi()
         if (timeoutCtr > WIFI_TIMEOUT_IN_100MS)
         {
             debugPrintf(" timeout\n");
-            return false;
+            return -1;
         }
         debugPrintf(".");
         delay(100);
     }
     debugPrintf("\n");
-    return true;
+    return 0;
 }
 
-bool Homeassistant::initMQTT()
+RETVAL Homeassistant::initMQTT()
 {
     mqttclient.begin(MQTT_ADDRESS, MQTT_PORT, netRef);
 }
 
-bool Homeassistant::connectMQTT()
+RETVAL Homeassistant::connectMQTT()
 {
     debugPrintf("connect mqtt...");
     while (!mqttclient.connect(DEVICENAME, MQTT_USERNAME, MQTT_PASSWORD))
@@ -73,6 +99,44 @@ bool Homeassistant::connectMQTT()
     debugPrintf("\n");
 }
 
-bool Homeassistant::registerLight()
+RETVAL Homeassistant::registerLight()
 {
+      // reset existing configuration
+    //homeassistant.publish("homeassistant/light/table/config", "");
+    //homeassistant.loop();
+
+    DynamicJsonDocument doc(MQTT_BUFFER_SIZE);
+    doc["~"] = "homeassistant/light/table";
+    doc["name"] = "Tisch";
+    doc["unique_id"] = "table_light";
+    doc["cmd_t"] = "~/set";
+    doc["stat_t"] = "~/state";
+    doc["schema"] = "json";
+    doc["brightness"] = true;
+    doc["rgb"] = true;
+    doc["white_value"] = true;
+    doc["optimistic"] = true;
+    doc["effect"] = true;
+    JsonArray effectList = doc.createNestedArray("effect_list");
+    for (uint8_t i = 0; i < sizeof(tischleds.availableAnimations) / sizeof(*tischleds.availableAnimations); i++)
+    {
+        effectList.add(tischleds.availableAnimations[i]);
+    }
+
+    char output[MQTT_BUFFER_SIZE];
+    if (serializeJson(doc, output) > MQTT_BUFFER_SIZE)
+    {
+        debugPrintLn("ARRAY OUT OF BOUNDS");
+        return;
+    }
+
+    debugPrintf("doc Memoryusage: %u\n", doc.memoryUsage);
+    debugPrintf("mqtt memory: %u\n", strlen(output));
+    debugPrintLn(output);
+
+    bool retVal = homeassistant.publish("homeassistant/light/table/config", output);
+
+    debugPrintf("publish: ");
+    debugPrintLn(retVal);
+
 }
