@@ -1,8 +1,10 @@
 #include "Homeassistant.h"
+#include <ArduinoJson.h>
 
-Homeassistant::Homeassistant(const char *const *availableAnimations)
-    : mqttclient(MQTT_BUFFER_SIZE),
-      availableAnimations(availableAnimations)
+
+Homeassistant::Homeassistant(StripWrapper * strip)
+    :strip(strip),
+    mqttclient(MQTT_BUFFER_SIZE)
 {
   initWifi();
   initMQTT();
@@ -23,6 +25,7 @@ RETVAL Homeassistant::connect()
   if (ret != 0){
     return ret;
   }
+  return EXIT_SUCCESS;
 }
 
 RETVAL Homeassistant::reconnect()
@@ -30,26 +33,28 @@ RETVAL Homeassistant::reconnect()
   //check wifi
   //check MQTT
   //check Homeassistant
-
+  return EXIT_SUCCESS;
 }
 
 RETVAL Homeassistant::connected()
 {
   if (!WiFi.isConnected()){
-    return HA_WIFI_NOT_CONNECTED | HA_MQTT_NOT_CONNECTED;
+    return EXIT_HA_WIFI_NOT_CONNECTED | EXIT_HA_MQTT_NOT_CONNECTED;
   }
   if (!mqttclient.connected()){
-    return HA_MQTT_NOT_CONNECTED;
+    return EXIT_HA_MQTT_NOT_CONNECTED;
   }
-
+  return EXIT_SUCCESS;
 }
 
-RETVAL Homeassistant::sendStatus()
+RETVAL Homeassistant::sendStatus(Status s)
 {
+  return 0;
 }
 
 void Homeassistant::onStatusReceived()
 {
+
 }
 
 RETVAL Homeassistant::initWifi()
@@ -85,6 +90,7 @@ RETVAL Homeassistant::connectWifi()
 RETVAL Homeassistant::initMQTT()
 {
     mqttclient.begin(MQTT_ADDRESS, MQTT_PORT, netRef);
+    return EXIT_SUCCESS;
 }
 
 RETVAL Homeassistant::connectMQTT()
@@ -97,6 +103,7 @@ RETVAL Homeassistant::connectMQTT()
     }
     mqttclient.publish("test", "test");
     debugPrintf("\n");
+    return EXIT_SUCCESS;
 }
 
 RETVAL Homeassistant::registerLight()
@@ -118,25 +125,24 @@ RETVAL Homeassistant::registerLight()
     doc["optimistic"] = true;
     doc["effect"] = true;
     JsonArray effectList = doc.createNestedArray("effect_list");
-    for (uint8_t i = 0; i < sizeof(tischleds.availableAnimations) / sizeof(*tischleds.availableAnimations); i++)
+    for (uint8_t i = 0; i < strip->availableAnimationCount / strip->availableAnimationCount; i++)
     {
-        effectList.add(tischleds.availableAnimations[i]);
+        effectList.add(strip->availableAnimations[i]);
     }
 
     char output[MQTT_BUFFER_SIZE];
     if (serializeJson(doc, output) > MQTT_BUFFER_SIZE)
     {
         debugPrintLn("ARRAY OUT OF BOUNDS");
-        return;
+        return EXIT_FAILURE;
     }
-
-    debugPrintf("doc Memoryusage: %u\n", doc.memoryUsage);
+    debugPrintf("doc Memoryusage: %u\n", doc.memoryUsage());
     debugPrintf("mqtt memory: %u\n", strlen(output));
     debugPrintLn(output);
 
-    bool retVal = homeassistant.publish("homeassistant/light/table/config", output);
+    bool retVal = mqttclient.publish("homeassistant/light/table/config", output);
 
     debugPrintf("publish: ");
     debugPrintLn(retVal);
-
+    return EXIT_SUCCESS;
 }

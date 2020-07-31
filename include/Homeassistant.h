@@ -3,7 +3,8 @@
  *  also contains Wifi, MQTT; this could go into theyr own classes
  *  but i dont want to separate them right now
  */
-
+#ifndef HOMEASSISTANT_HEADER_GUARD
+#define HOMEASSISTANT_HEADER_GUARD
 #include <Arduino.h>
 #include <MQTT.h>
 #include <ESP8266WiFi.h>
@@ -16,7 +17,7 @@
 
 #define debugHomeassistant
 #ifdef debugHomeassistant
-#   define debugPrintf( ... ) Serial.print( __VA_ARGS )
+#   define debugPrintf( ... ) Serial.printf( __VA_ARGS__ )
 #   define debugPrintLn( x ) Serial.println( x )
 #else
 #   define debugPrintf( ... )
@@ -25,8 +26,8 @@
 
 // retvals
 typedef int8_t RETVAL;
-#define HA_WIFI_NOT_CONNECTED 1
-#define HA_MQTT_NOT_CONNECTED 2
+#define EXIT_HA_WIFI_NOT_CONNECTED 1
+#define EXIT_HA_MQTT_NOT_CONNECTED 2
 
 
 class Homeassistant
@@ -45,14 +46,15 @@ public:
                 uint8_t w;
             };
             
-        };
-        
+        } color;
+        const char * animation;
+        bool operator==(const Status &s) const;
     };
     
     /**
      * Strip musst be initialized
      */
-    Homeassistant(const char *const * availableAnimations);
+    Homeassistant(StripWrapper * strip);
     ~Homeassistant();
     RETVAL connect();
     RETVAL reconnect();
@@ -61,13 +63,15 @@ public:
      * return bitcode homeassistant, MQTT, WiFi
      */
     RETVAL connected();
-    RETVAL sendStatus();
+    RETVAL sendStatus(Status s);
     void onStatusReceived();
 private:
     /* data */
-    const char *const * availableAnimations;
-    MQTTClient mqttclient;
+    StripWrapper * strip;
+    Status status;
     WiFiClient netRef;
+    MQTTClient mqttclient;
+
 
     /* functions */
     RETVAL initWifi();
@@ -78,3 +82,4 @@ private:
 
 };
 
+#endif // HOMEASSISTANT_HEADER_GUARD
