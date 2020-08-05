@@ -38,13 +38,13 @@ public:
         union Color
         {
             uint32_t rgbw;
-            struct channels
+            struct Channels
             {
                 uint8_t r;
                 uint8_t g;
                 uint8_t b;
                 uint8_t w;
-            };
+            } channels;
             
         } color;
         const char * animation;
@@ -63,8 +63,8 @@ public:
      * return bitcode homeassistant, MQTT, WiFi
      */
     RETVAL connected();
-    RETVAL sendStatus(Status s);
-    void onStatusReceived();
+    RETVAL sendStatus(const Status &s);
+    void onStatusReceived(const Status &s);
 private:
     /* data */
     StripWrapper * strip;

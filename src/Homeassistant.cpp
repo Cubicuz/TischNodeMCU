@@ -47,14 +47,29 @@ RETVAL Homeassistant::connected()
   return EXIT_SUCCESS;
 }
 
-RETVAL Homeassistant::sendStatus(Status s)
+bool Homeassistant::Status::operator==(const Status &s) const
 {
-  return 0;
+  if (this->animation == s.animation){
+    return this->color.rgbw == s.color.rgbw;
+  } else {
+    return false;
+  }
 }
 
-void Homeassistant::onStatusReceived()
+RETVAL Homeassistant::sendStatus(const Status &s)
 {
+  if (status == s){
+    return 0;
+  }
+  //TODO send status
+}
 
+void Homeassistant::onStatusReceived(const Status &s)
+{
+  if (status == s){
+    return;
+  }
+  //TODO call callback
 }
 
 RETVAL Homeassistant::initWifi()
@@ -63,9 +78,8 @@ RETVAL Homeassistant::initWifi()
     if (ret != 0)
     {
         debugPrintf("Error initWifi code: %i", ret);
-        return -1;
     }
-    return 0;
+    return ret;
 }
 
 RETVAL Homeassistant::connectWifi()
@@ -108,7 +122,7 @@ RETVAL Homeassistant::connectMQTT()
 
 RETVAL Homeassistant::registerLight()
 {
-      // reset existing configuration
+    // reset existing configuration
     //homeassistant.publish("homeassistant/light/table/config", "");
     //homeassistant.loop();
 
