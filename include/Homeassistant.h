@@ -30,24 +30,26 @@ typedef int8_t RETVAL;
 #define EXIT_HA_MQTT_NOT_CONNECTED 2
 #define EXIT_TIMEOUT 3
 
+struct Status {
+  union Color {
+    uint32_t rgbw;
+    struct Channels {
+      uint8_t r;
+      uint8_t g;
+      uint8_t b;
+      uint8_t w;
+    } channels;
+
+  } color;
+  bool on;
+  const char *animation;
+  uint8_t brightness;
+  bool operator==(const Status &s) const;
+};
+
+
 class Homeassistant {
 public:
-  struct Status {
-    union Color {
-      uint32_t rgbw;
-      struct Channels {
-        uint8_t r;
-        uint8_t g;
-        uint8_t b;
-        uint8_t w;
-      } channels;
-
-    } color;
-    bool on;
-    const char *animation;
-    uint8_t brightness;
-    bool operator==(const Status &s) const;
-  };
 
   /**
    * Strip musst be initialized

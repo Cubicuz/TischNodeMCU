@@ -51,7 +51,7 @@ RETVAL Homeassistant::connected() {
   return EXIT_SUCCESS;
 }
 
-bool Homeassistant::Status::operator==(const Status &s) const {
+bool Status::operator==(const Status &s) const {
   if (this->animation == s.animation) {
     if(this->on == s.on){
       return this->color.rgbw == s.color.rgbw;
@@ -166,7 +166,6 @@ void Homeassistant::mqttCallback(MQTTClient *client, char topic[],
       s.color.channels.r = red;
       s.color.channels.g = green;
       s.color.channels.b = blue;
-
     }
     if (doc.containsKey("white_value")) {
       s.color.channels.w = doc["white_value"];
@@ -175,7 +174,12 @@ void Homeassistant::mqttCallback(MQTTClient *client, char topic[],
       s.brightness = doc["brightness"];
     }
     if (doc.containsKey("effect")) {
-      const char *const effect = doc["effect"];
+      const char * effect = doc["effect"];
+      effect = instance->strip->sameAnimationNameButMyPointer(effect);
+      if (effect == nullptr){
+        Serial.println("animation is invalid");
+        return;
+      }
       debugPrintLn(effect);
       s.animation = effect;
     }
