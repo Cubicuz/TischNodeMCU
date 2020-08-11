@@ -53,17 +53,11 @@ RETVAL Homeassistant::connected() {
 
 bool Homeassistant::Status::operator==(const Status &s) const {
   if (this->animation == s.animation) {
-    return this->color.rgbw == s.color.rgbw;
-  } else {
-    return false;
+    if(this->on == s.on){
+      return this->color.rgbw == s.color.rgbw;
+    }
   }
-}
-
-RETVAL Homeassistant::sendStatus(const Status &s) {
-  if (status == s) {
-    return EXIT_SUCCESS;
-  }
-  // TODO send status
+  return false;
 }
 
 RETVAL Homeassistant::setStatusReceivedCallback(
@@ -116,6 +110,40 @@ RETVAL Homeassistant::connectMQTT() {
   return EXIT_SUCCESS;
 }
 
+RETVAL Homeassistant::sendStatus(const Status &s) {
+  if (status == s) {
+    return EXIT_SUCCESS;
+  }
+  DynamicJsonDocument doc(MQTT_BUFFER_SIZE);
+  if (s.on){
+    doc["state"] = "on";
+    auto color = doc.createNestedObject("color");
+    color["r"] = s.color.channels.r;
+    color["g"] = s.color.channels.g;
+    color["b"] = s.color.channels.b;
+    doc["white_value"] = s.color.channels.w;
+    doc["brightness"] = s.brightness;
+    doc["effect"] = s.animation;
+  } else {
+    doc["state"] = "off";
+  }
+  char output[MQTT_BUFFER_SIZE];
+  if (serializeJson(doc, output) > MQTT_BUFFER_SIZE) {
+    debugPrintLn("ARRAY OUT OF BOUNDS");
+    return EXIT_FAILURE;
+  }
+  debugPrintf("doc Memoryusage: %u\n", doc.memoryUsage());
+  debugPrintf("mqtt memory: %u\n", strlen(output));
+  debugPrintLn(output);
+
+  bool retVal = mqttclient.publish("homeassistant/light/table/state", output);
+
+  debugPrintf("publish: ");
+  debugPrintLn(retVal);
+  return EXIT_SUCCESS;
+
+}
+
 void Homeassistant::mqttCallback(MQTTClient *client, char topic[],
                                  char payload[], int payload_length) {
   debugPrintLn("callback");
@@ -127,6 +155,7 @@ void Homeassistant::mqttCallback(MQTTClient *client, char topic[],
     Serial.print(e.c_str());
   }
   if (strcmp(doc["state"], "ON") == 0) {
+    s.on = true;
     if (doc.containsKey("color")) {
       Serial.println("color:");
       Serial.print("r: ");
@@ -150,6 +179,8 @@ void Homeassistant::mqttCallback(MQTTClient *client, char topic[],
       debugPrintLn(effect);
       s.animation = effect;
     }
+  } else {
+    s.on = false;
   }
   if (s == instance->status){
     return;

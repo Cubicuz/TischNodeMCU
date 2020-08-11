@@ -43,6 +43,7 @@ public:
       } channels;
 
     } color;
+    bool on;
     const char *animation;
     uint8_t brightness;
     bool operator==(const Status &s) const;
