@@ -8,14 +8,23 @@ Homeassistant::Homeassistant(StripWrapper *strip)
     return;
   }
   instance = this;
-  initWifi();
-  initMQTT();
 }
 
 Homeassistant::~Homeassistant(){
   instance = NULL;
 }
 
+RETVAL Homeassistant::begin(){
+  RETVAL ret = initWifi();
+  if (ret != EXIT_SUCCESS){
+    return ret;
+  }
+  return initMQTT();
+}
+
+void Homeassistant::loop(){
+  mqttclient.loop();
+}
 
 RETVAL Homeassistant::connect() {
   RETVAL ret = 0;

@@ -56,6 +56,8 @@ public:
    */
   Homeassistant(StripWrapper *strip);
   ~Homeassistant();
+  RETVAL begin();
+  void loop();
   RETVAL connect();
   RETVAL reconnect();
 
