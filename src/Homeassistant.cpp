@@ -1,13 +1,20 @@
 #include "Homeassistant.h"
 #include <ArduinoJson.h>
 
+Homeassistant* Homeassistant::instance;
+
 Homeassistant::Homeassistant(StripWrapper *strip)
     : strip(strip), mqttclient(MQTT_BUFFER_SIZE) {
   if (instance){
     Serial.println("ERROR: two instances of Homeassistant !!!");
     return;
   }
+  status.animation = strip->SOLID;
+  status.brightness = 255;
+  status.on = false;
+  status.color.rgbw = 0;
   instance = this;
+  strip->setAnimation(strip->SOLID);
 }
 
 Homeassistant::~Homeassistant(){
@@ -23,6 +30,9 @@ RETVAL Homeassistant::begin(){
 }
 
 void Homeassistant::loop(){
+  if (status.on){
+    strip->animate();
+  }
   mqttclient.loop();
 }
 
@@ -34,10 +44,12 @@ RETVAL Homeassistant::connect() {
   }
   ret = connectMQTT();
   if (ret != 0) {
+    debugPrintf("Error on connect mqtt: %i", ret);
     return ret;
   }
   ret = registerLight();
   if (ret != 0) {
+    debugPrintf("Error on registerLight: %i", ret);
     return ret;
   }
   return EXIT_SUCCESS;
@@ -77,9 +89,10 @@ RETVAL Homeassistant::setStatusReceivedCallback(
 
 RETVAL Homeassistant::initWifi() {
   wl_status_t ret = WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  if (ret != WL_CONNECTED) {
-    debugPrintf("Error initWifi code: %i", ret);
-    return EXIT_FAILURE;
+  if (ret == WL_CONNECTED){
+    debugPrintLn("connected to wifi");
+  } else if (ret == WL_IDLE_STATUS){
+    debugPrintLn("maybe wrong ssid or so");
   }
   return EXIT_SUCCESS;
 }
@@ -113,7 +126,7 @@ RETVAL Homeassistant::connectMQTT() {
   }
   instance = this;
   mqttclient.onMessageAdvanced(Homeassistant::mqttCallback);
-  mqttclient.subscribe("homeassistant/light/table/set");
+  mqttclient.subscribe("discovery/light/table/set");
   mqttclient.publish("test", "test");
   debugPrintf("\n");
   return EXIT_SUCCESS;
@@ -145,7 +158,7 @@ RETVAL Homeassistant::sendStatus(const Status &s) {
   debugPrintf("mqtt memory: %u\n", strlen(output));
   debugPrintLn(output);
 
-  bool retVal = mqttclient.publish("homeassistant/light/table/state", output);
+  bool retVal = mqttclient.publish("discovery/light/table/state", output);
 
   debugPrintf("publish: ");
   debugPrintLn(retVal);
@@ -208,7 +221,7 @@ RETVAL Homeassistant::registerLight() {
   // homeassistant.loop();
 
   DynamicJsonDocument doc(MQTT_BUFFER_SIZE);
-  doc["~"] = "homeassistant/light/table";
+  doc["~"] = "discovery/light/table";
   doc["name"] = "Tisch";
   doc["unique_id"] = "table_light";
   doc["cmd_t"] = "~/set";
@@ -235,7 +248,7 @@ RETVAL Homeassistant::registerLight() {
   debugPrintf("mqtt memory: %u\n", strlen(output));
   debugPrintLn(output);
 
-  bool retVal = mqttclient.publish("homeassistant/light/table/config", output);
+  bool retVal = mqttclient.publish("discovery/light/table/config", output);
 
   debugPrintf("publish: ");
   debugPrintLn(retVal);

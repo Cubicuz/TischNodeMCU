@@ -44,6 +44,5 @@ void setup()
 
 void loop()
 {
-    tischleds.animate();
     hs.loop();
 }
