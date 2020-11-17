@@ -1,4 +1,4 @@
-#include "Homeassistant.h"
+#include "HomeAssistant.h"
 #include <ArduinoJson.h>
 
 Homeassistant* Homeassistant::instance;

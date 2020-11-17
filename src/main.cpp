@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
-#include "Homeassistant.h"
+#include "HomeAssistant.h"
 #define NUM_LEDS 30
 #define DATA_PIN D3
 #define MOSFET_PIN D1
